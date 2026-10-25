@@ -1,0 +1,23 @@
+[project]
+name = "character-card-mac"
+version = "0.1.0"
+description = "Apple Silicon character-sheet generator: Grok designs the card, mflux/FLUX renders cells, Pillow composes the sheet."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+  "Pillow>=10.0.0",
+]
+
+[project.optional-dependencies]
+mflux = ["mflux>=0.13.0"]
+
+[project.scripts]
+character-card-mac = "character_card_mac.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

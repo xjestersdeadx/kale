@@ -1,0 +1,17 @@
+{
+  "title": "Mira Vale",
+  "identity": "A 28-year-old cartographer and trail guide who maps forgotten coastal paths.",
+  "appearance": "Sharp oval face, warm olive skin, dark brown eyes, wind-tousled black bob with a silver streak at the temple, athletic lean build about 5'7\".",
+  "outfit": "Weathered olive field jacket over a cream knit turtleneck, charcoal hiking trousers, scuffed chestnut boots, brass compass on a leather cord.",
+  "palette": "olive, cream, charcoal, chestnut, brass",
+  "style": "photoreal cinematic character sheet, pure white seamless studio backdrop, soft key light, consistent identity across every panel",
+  "templateId": "turnaround_6",
+  "cells": [
+    { "id": "head_front", "brief": "Front head-and-shoulders, calm focused expression, facing camera" },
+    { "id": "head_side", "brief": "Strict 90-degree left profile head-and-shoulders" },
+    { "id": "head_back", "brief": "Rear head-and-shoulders showing bob haircut and silver streak, no face" },
+    { "id": "body_front", "brief": "Front full-body standing pose, arms relaxed, boots fully visible" },
+    { "id": "body_side", "brief": "Strict 90-degree left profile full-body, jacket silhouette clear" },
+    { "id": "body_back", "brief": "Strict 180-degree back full-body, compass cord visible" }
+  ]
+}
