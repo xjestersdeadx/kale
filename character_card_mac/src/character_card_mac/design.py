@@ -26,6 +26,8 @@ def build_card_plan(
     show_labels: bool = False,
     engine: str = "mflux-flux-schnell-4bit",
     memory_budget_gb: float = 24.0,
+    reference_image: str | None = None,
+    image_strength: float = 0.45,
 ) -> dict[str, Any]:
     """Return a portable character-sheet plan.
 
@@ -56,11 +58,18 @@ def build_card_plan(
             "notes": (
                 "Prefer FLUX.1-schnell via mflux with --quantize 4 --low-ram. "
                 "Generate one cell at a time so peak unified memory stays under ~24GB. "
+                "Pass a reference photo for img2img identity lock. "
                 "Do not load Qwen-Image 2.1 + Qwen3-VL together on 24GB Apple Silicon."
             ),
         },
         "cells": [],
     }
+    if reference_image:
+        ref = str(Path(reference_image).expanduser().resolve())
+        plan["referenceImage"] = ref
+        plan["imageStrength"] = float(image_strength)
+        plan["engine"]["referenceImage"] = True
+        plan["engine"]["imageStrength"] = float(image_strength)
 
     for cell in template["cells"]:
         plan["cells"].append(

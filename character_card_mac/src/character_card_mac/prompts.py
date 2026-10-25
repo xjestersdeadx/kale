@@ -46,8 +46,15 @@ def compile_cell_prompt(plan: dict[str, Any], cell: dict[str, Any]) -> str:
     brief = _clean(cell.get("brief") or cell.get("prompt") or "")
     label = _clean(cell.get("label") or cell.get("id") or "asset")
 
+    has_reference = bool(plan.get("referenceImage"))
     parts = [
         f"Same character throughout. Character: {identity}." if identity else "Same original character.",
+        (
+            "The init/reference photo is the identity anchor: keep the same face, hair, skin tone, "
+            "body proportions, clothing, and accessories. Only change camera angle, crop, pose, or expression as requested."
+            if has_reference
+            else ""
+        ),
         f"Appearance lock: {appearance}." if appearance else "",
         f"Outfit lock: {outfit}." if outfit else "",
         f"Color palette: {palette}." if palette else "",

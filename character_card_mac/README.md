@@ -76,7 +76,43 @@ character-card-mac venice-chat --prompt "Reply with exactly: venice-ok"
 
 Defaults: `https://api.venice.ai/api/v1`, model `zai-org-glm-5-2`.
 
-## Grok Bot → plan → sheet
+## If you already have the character photo (recommended)
+
+One command on the Mac:
+
+```bash
+character-card-mac from-image \
+  --image ~/Photos/mira.png \
+  --out ~/Sheets/mira \
+  --backend mflux
+```
+
+What it does:
+
+1. Sends the photo to Venice **vision** (`qwen3-vl-235b-a22b`, not GLM 5.2) to lock name / appearance / outfit  
+2. Writes `plan.json` with `referenceImage`  
+3. Runs **mflux img2img** per panel (`--image-path` + `--image-strength`) so face/outfit stay anchored  
+4. Composes `character_sheet.png`
+
+Skip Venice describe if you already wrote the text locks:
+
+```bash
+character-card-mac from-image \
+  --image ~/Photos/mira.png \
+  --title "Mira Vale" \
+  --appearance "..." \
+  --no-describe \
+  --backend mflux \
+  --out ~/Sheets/mira
+```
+
+Dry-run layout using your photo as placeholders (no Mac GPU art):
+
+```bash
+character-card-mac from-image --image ~/Photos/mira.png --backend placeholder --no-describe --out ~/Sheets/mira_preview
+```
+
+## Grok / Venice text → plan → sheet
 
 1. Give Grok the system prompt in [`prompts/grok_system.md`](prompts/grok_system.md).
 2. Ask for a character. Grok returns JSON (see [`examples/sample_character.json`](examples/sample_character.json)).
@@ -99,6 +135,10 @@ character-card-mac generate --plan /tmp/mira_plan.json --backend placeholder --o
 
 # Real generation on Apple Silicon
 character-card-mac generate --plan /tmp/mira_plan.json --backend mflux --out ~/Sheets/mira
+
+# or attach a photo for identity lock:
+character-card-mac generate --plan /tmp/mira_plan.json --backend mflux \
+  --reference ~/Photos/mira.png --image-strength 0.45 --steps 4 --out ~/Sheets/mira
 ```
 
 Inspect compiled FLUX prompts without generating:

@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 from .design import build_card_plan, load_plan, merge_grok_overrides, save_plan
+from .from_image import attach_reference, create_sheet_from_image
 from .generate import generate_sheet
 from .prompts import compile_all_cell_prompts
 from .templates import TEMPLATE_OPTIONS, list_templates
@@ -32,10 +33,14 @@ def _cmd_design(args: argparse.Namespace) -> int:
         template_id=args.template,
         show_labels=args.show_labels,
         memory_budget_gb=args.memory_gb,
+        reference_image=args.reference,
+        image_strength=args.image_strength,
     )
     if args.overrides:
         overrides = json.loads(Path(args.overrides).read_text(encoding="utf-8"))
         plan = merge_grok_overrides(plan, overrides)
+    if args.reference:
+        plan = attach_reference(plan, args.reference, image_strength=args.image_strength)
     path = save_plan(plan, args.out)
     print(path)
     return 0
@@ -65,6 +70,32 @@ def _cmd_generate(args: argparse.Namespace) -> int:
         model=args.model,
         low_ram=not args.no_low_ram,
         fit_mode=args.fit_mode,
+        reference_image=args.reference,
+        image_strength=args.image_strength,
+    )
+    for key, value in paths.items():
+        print(f"{key}: {value}")
+    return 0
+
+
+def _cmd_from_image(args: argparse.Namespace) -> int:
+    paths = create_sheet_from_image(
+        args.image,
+        args.out,
+        title=args.title,
+        identity=args.identity,
+        appearance=args.appearance,
+        outfit=args.outfit,
+        template_id=args.template,
+        backend=args.backend,
+        describe=not args.no_describe,
+        image_strength=args.image_strength,
+        seed=args.seed,
+        steps=args.steps,
+        quantize=args.quantize,
+        model=args.model,
+        low_ram=not args.no_low_ram,
+        venice_model=args.venice_model,
     )
     for key, value in paths.items():
         print(f"{key}: {value}")
@@ -83,24 +114,27 @@ def _cmd_venice_chat(args: argparse.Namespace) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="character-card-mac",
-        description="Design and generate Apple Silicon character sheets (Grok plan → mflux cells → compose).",
+        description="Design and generate Apple Silicon character sheets (photo/text → mflux cells → compose).",
     )
     sub = parser.add_subparsers(dest="command", required=True)
+    template_ids = [t.split(" |", 1)[0] for t in TEMPLATE_OPTIONS]
 
     p_templates = sub.add_parser("templates", help="List built-in sheet layouts")
     p_templates.set_defaults(func=_cmd_templates)
 
-    p_design = sub.add_parser("design", help="Create a Grok-compatible card plan JSON")
+    p_design = sub.add_parser("design", help="Create a card plan JSON")
     p_design.add_argument("--title", required=True)
     p_design.add_argument("--identity", required=True, help="Who the character is")
     p_design.add_argument("--appearance", required=True, help="Face, hair, body lock")
     p_design.add_argument("--outfit", default="")
     p_design.add_argument("--palette", default="")
     p_design.add_argument("--style", default=None)
-    p_design.add_argument("--template", default="turnaround_6", choices=[t.split(" |", 1)[0] for t in TEMPLATE_OPTIONS])
+    p_design.add_argument("--template", default="turnaround_6", choices=template_ids)
     p_design.add_argument("--show-labels", action="store_true")
     p_design.add_argument("--memory-gb", type=float, default=24.0)
-    p_design.add_argument("--overrides", help="Optional JSON overrides from Grok")
+    p_design.add_argument("--overrides", help="Optional JSON overrides from Grok/Venice")
+    p_design.add_argument("--reference", help="Path to character reference photo")
+    p_design.add_argument("--image-strength", type=float, default=0.45)
     p_design.add_argument("--out", required=True)
     p_design.set_defaults(func=_cmd_design)
 
@@ -113,6 +147,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_gen.add_argument("--plan", required=True)
     p_gen.add_argument("--out", required=True)
     p_gen.add_argument("--backend", choices=["placeholder", "mflux"], default="placeholder")
+    p_gen.add_argument("--reference", help="Override/add reference photo for img2img identity lock")
+    p_gen.add_argument("--image-strength", type=float, default=None)
     p_gen.add_argument("--seed", type=int, default=42)
     p_gen.add_argument("--steps", type=int, default=2)
     p_gen.add_argument("--quantize", type=int, default=4, choices=[4, 8])
@@ -120,6 +156,28 @@ def build_parser() -> argparse.ArgumentParser:
     p_gen.add_argument("--no-low-ram", action="store_true")
     p_gen.add_argument("--fit-mode", choices=["contain", "cover"], default="contain")
     p_gen.set_defaults(func=_cmd_generate)
+
+    p_from = sub.add_parser(
+        "from-image",
+        help="One-shot: character photo → (Venice describe) → sheet",
+    )
+    p_from.add_argument("--image", required=True, help="Path to the character photo")
+    p_from.add_argument("--out", required=True, help="Output directory")
+    p_from.add_argument("--title")
+    p_from.add_argument("--identity")
+    p_from.add_argument("--appearance")
+    p_from.add_argument("--outfit")
+    p_from.add_argument("--template", default="turnaround_6", choices=template_ids)
+    p_from.add_argument("--backend", choices=["placeholder", "mflux"], default="mflux")
+    p_from.add_argument("--no-describe", action="store_true", help="Skip Venice vision describe")
+    p_from.add_argument("--image-strength", type=float, default=0.45)
+    p_from.add_argument("--seed", type=int, default=42)
+    p_from.add_argument("--steps", type=int, default=None)
+    p_from.add_argument("--quantize", type=int, default=4, choices=[4, 8])
+    p_from.add_argument("--model", default="schnell")
+    p_from.add_argument("--no-low-ram", action="store_true")
+    p_from.add_argument("--venice-model", default=None)
+    p_from.set_defaults(func=_cmd_from_image)
 
     p_venice = sub.add_parser("venice-chat", help="Smoke-test Venice /chat/completions")
     p_venice.add_argument(
