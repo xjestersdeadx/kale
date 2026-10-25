@@ -61,6 +61,21 @@ pip install -e .
 pip install 'mflux>=0.13.0'
 ```
 
+## Venice AI (chat / card design)
+
+Venice is OpenAI-compatible ([docs](https://docs.venice.ai)). Copy the repo-root `.env.example` to `.env` and set `VENICE_API_KEY` (never commit `.env`).
+
+```bash
+# from repo root
+cp .env.example .env   # then edit VENICE_API_KEY=
+
+python character_card_mac/scripts/venice_smoke.py
+# or:
+character-card-mac venice-chat --prompt "Reply with exactly: venice-ok"
+```
+
+Defaults: `https://api.venice.ai/api/v1`, model `zai-org-glm-5-2`.
+
 ## Grok Bot → plan → sheet
 
 1. Give Grok the system prompt in [`prompts/grok_system.md`](prompts/grok_system.md).

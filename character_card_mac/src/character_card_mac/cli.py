@@ -12,6 +12,7 @@ from .design import build_card_plan, load_plan, merge_grok_overrides, save_plan
 from .generate import generate_sheet
 from .prompts import compile_all_cell_prompts
 from .templates import TEMPLATE_OPTIONS, list_templates
+from .venice import chat_text, get_venice_settings
 
 
 def _cmd_templates(_: argparse.Namespace) -> int:
@@ -70,6 +71,15 @@ def _cmd_generate(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_venice_chat(args: argparse.Namespace) -> int:
+    settings = get_venice_settings()
+    reply = chat_text(args.prompt, model=args.model)
+    print(f"model: {args.model or settings['model']}")
+    print(f"base_url: {settings['base_url']}")
+    print(reply)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="character-card-mac",
@@ -110,6 +120,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_gen.add_argument("--no-low-ram", action="store_true")
     p_gen.add_argument("--fit-mode", choices=["contain", "cover"], default="contain")
     p_gen.set_defaults(func=_cmd_generate)
+
+    p_venice = sub.add_parser("venice-chat", help="Smoke-test Venice /chat/completions")
+    p_venice.add_argument(
+        "--prompt",
+        default="Reply with exactly: venice-ok",
+        help="User message to send",
+    )
+    p_venice.add_argument(
+        "--model",
+        default=None,
+        help="Model id (default: VENICE_MODEL or zai-org-glm-5-2)",
+    )
+    p_venice.set_defaults(func=_cmd_venice_chat)
 
     return parser
 

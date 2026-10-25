@@ -1,3 +1,5 @@
 Pillow>=10.0.0
+openai>=1.40.0
+python-dotenv>=1.0.0
 # Optional on Apple Silicon for real image generation:
 # mflux>=0.13.0
